@@ -1,0 +1,9 @@
+include: "rules/benchmark_ontologizer.smk"
+include: "rules/benchmark_geo2kegg.smk"
+
+rule all:
+    input:
+        "results/benchmark_ontologizer.png",
+        "results/benchmark_ontologizer.pdf",
+        "results/benchmark_geo2kegg.png",
+        "results/benchmark_geo2kegg.pdf"
