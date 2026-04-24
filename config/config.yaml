@@ -1,4 +1,4 @@
-go_json: "/home/lukas/PycharmProjects/Ontologizer-Benchmark/resources/go-basic.json"
-go_obo: "/home/lukas/PycharmProjects/Ontologizer-Benchmark/resources/go-basic.obo"
-gaf: "/home/lukas/PycharmProjects/Ontologizer-Benchmark/resources/goa_human.gaf"
+go_json: "resources/go-basic.json"
+go_obo: "resources/go-basic.obo"
+gaf: "resources/goa_human.gaf"
 ontologizer: "/home/lukas/RustroverProjects/ontologizer/target/release/ontologizer"

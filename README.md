@@ -2,7 +2,7 @@
 
 Benchmarks and compares GO (Gene Ontology) enrichment analysis methods:
 
-- **Ontologizer** — a Rust-based ORA tool supporting frequentist (Bonferroni-corrected) and Bayesian scoring
+- **Ontologizer** — a Rust-based ORA tool supporting Frequentist and Bayesian scoring
 - **GOATools** — a Python-based GO enrichment library
 
 Two evaluation tracks are included:
@@ -14,7 +14,6 @@ Two evaluation tracks are included:
 
 - Conda
 - A built Ontologizer binary (from the `ontologizer` Rust project)
-- GO files: `go-basic.obo`, `go-basic.json`, `goa_human.gaf`
 
 ## Setup
 
@@ -33,7 +32,7 @@ go_obo:       /path/to/go-basic.obo
 gaf:          /path/to/goa_human.gaf
 ontologizer:  /path/to/ontologizer   # compiled Rust binary
 ```
-
+The GO files `go-basic.obo`, `go-basic.json`, `goa_human.gaf` will be downloaded automatically to the specified paths.
 **3. Download the geo2kegg datasets** (requires R + BioConductor):
 
 ```bash
