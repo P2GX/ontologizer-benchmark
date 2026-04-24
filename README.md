@@ -54,6 +54,16 @@ This produces four output files in `results/`:
 | `benchmark_ontologizer.png/pdf` | Precision/recall curves for the synthetic benchmark |
 | `benchmark_geo2kegg.png/pdf` | Method comparison on real GEO datasets |
 
+## Synthetic Benchmark Design
+
+Synthetic gene sets are generated with controlled parameters:
+
+- **Recall experiment** — noise fixed at 0.4, signal recall varied from 0.1 to 1.0 in steps of 0.1
+- **Noise experiment** — recall fixed at 0.4, noise varied from 0.0 to 2.0× signal size in steps of 0.2
+- 10 replicates per configuration, 10 recall levels × 11 noise levels = ~400 total ORA runs
+
+Each run is evaluated by comparing predicted significant terms against the known ground-truth terms using detection recall and precision.
+
 ## Project Structure
 
 ```
@@ -70,32 +80,28 @@ results/
 workflow/
   Snakefile
   rules/
-    benchmark_ontologizer.smk  # Synthetic benchmark rules
-    benchmark_geo2kegg.smk     # geo2kegg benchmark rules
+    download_go.smk              # Download GO hierarchy and annotation files
+    benchmark_ontologizer.smk    # Synthetic benchmark rules
+    benchmark_geo2kegg.smk       # geo2kegg benchmark rules
   scripts/
-    common.py                  # Shared utilities
-    gen_population_genes.py    # Background gene universe
-    gen_recall_study_genes.py  # Synthetic sets varying signal recall
-    gen_noise_study_genes.py   # Synthetic sets varying noise level
-    run_freq_benchmark.py      # Frequentist ORA on synthetic data
-    run_bayes_benchmark.py     # Bayesian ORA on synthetic data
-    run_freq_ontologizer.py    # Frequentist ORA on GEO data
-    run_bayes_ontologizer.py   # Bayesian ORA on GEO data
-    run_freq_goatools.py       # GOATools ORA on GEO data
-    plot_ontologizer.py        # Plot synthetic benchmark results
-    plot_geo2kegg.py           # Plot geo2kegg benchmark results
-    download_geo2kegg.R        # Download GEO datasets (R)
-    build_symbol_tab.py        # Build gene symbol lookup table
+    synthetic/
+      common.py                  # Shared utilities for synthetic benchmark
+      gen_population_genes.py    # Background gene universe
+      gen_recall_study_genes.py  # Synthetic sets varying signal recall
+      gen_noise_study_genes.py   # Synthetic sets varying noise level
+      run_freq_benchmark.py      # Frequentist ORA on synthetic data
+      run_bayes_benchmark.py     # Bayesian ORA on synthetic data
+    geo2kegg/
+      download_geo2kegg.R        # Download GEO datasets (R)
+      build_symbol_tab.py        # Build gene symbol lookup table
+      run_freq_ontologizer.py    # Frequentist ORA on GEO data
+      run_bayes_ontologizer.py   # Bayesian ORA on GEO data
+      run_freq_goatools.py       # GOATools ORA on GEO data
+    plot/
+      plot_ontologizer.py        # Plot synthetic benchmark results
+      plot_geo2kegg.py           # Plot geo2kegg benchmark results
   envs/
-    environment.yaml           # Conda environment definition
+    environment.yaml             # Conda environment definition
 ```
 
-## Synthetic Benchmark Design
 
-Synthetic gene sets are generated with controlled parameters:
-
-- **Recall experiment** — noise fixed at 0.4, signal recall varied from 0.1 to 1.0 in steps of 0.1
-- **Noise experiment** — recall fixed at 0.4, noise varied from 0.0 to 2.0× signal size in steps of 0.2
-- 10 replicates per configuration, 10 recall levels × 11 noise levels = ~400 total ORA runs
-
-Each run is evaluated by comparing predicted significant terms against the known ground-truth terms using detection recall and precision.
