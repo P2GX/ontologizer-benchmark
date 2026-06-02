@@ -1,107 +1,92 @@
 # Ontologizer Benchmark
 
-Benchmarks and compares GO (Gene Ontology) enrichment analysis methods:
+Benchmarks **Ontologizer's** GO (Gene Ontology) over-representation analysis (ORA):
 
-- **Ontologizer** — a Rust-based ORA tool supporting Frequentist and Bayesian scoring
-- **GOATools** — a Python-based GO enrichment library
+- **Frequentist (TfT)** — Term-for-Term Fisher's exact test, Bonferroni-corrected. Terms called significant at *p* ≤ 0.05.
+- **Bayesian (MGSA)** — Model-based Gene-set Analysis. Terms called significant at posterior probability ≥ 0.50.
 
-Two evaluation tracks are included:
-
-1. **Synthetic benchmark** — controlled recall and noise experiments with known ground truth
-2. **geo2kegg benchmark** — 42 real-world GEO datasets with KEGG pathway annotations
+The benchmark is **synthetic**: study gene sets are generated from real GO/GAF annotations with controlled signal, 
+so the ground-truth of active terms is known and detection precision/recall can be measured exactly.
 
 ## Prerequisites
 
 - Conda
-- A built Ontologizer binary (from the `ontologizer` Rust project)
+- A pre-built Ontologizer binary, compiled separately from the `ontologizer`
+  Rust project (https://github.com/P2GX/ontologizer). This repository only invokes it via `subprocess`; it does not
+  build or ship it.
 
 ## Setup
 
-**1. Create the Conda environment:**
+**1. Create and activate the Conda environment:**
 
 ```bash
 conda env create -f workflow/envs/environment.yaml
-conda activate <env-name>
+conda activate ontologizer-benchmark
 ```
 
-**2. Configure paths in `config/config.yaml`:**
+**2. Point `config/config.yaml` at your Ontologizer binary:**
 
 ```yaml
-go_json:      /path/to/go-basic.json
-go_obo:       /path/to/go-basic.obo
-gaf:          /path/to/goa_human.gaf
-ontologizer:  /path/to/ontologizer   # compiled Rust binary
+go_json:     resources/go-basic.json   # auto-downloaded
+go_obo:      resources/go-basic.obo    # auto-downloaded
+gaf:         resources/goa_human.gaf   # auto-downloaded
+ontologizer: /path/to/ontologizer      # <-- compiled Rust binary (absolute path)
 ```
-The GO files `go-basic.obo`, `go-basic.json`, `goa_human.gaf` will be downloaded automatically to the specified paths.
-**3. Download the geo2kegg datasets** (requires R + BioConductor):
 
-```bash
-snakemake --cores 1 --use-conda download_geo2kegg
-```
+The GO files (`go-basic.json`, `go-basic.obo`, `goa_human.gaf`) are downloaded
+automatically by the `download_go` rule the first time the pipeline runs.
 
 ## Running
 
-Run the full pipeline:
-
 ```bash
+# Confirm the workflow graph resolves without running anything
+snakemake -n
+
+# Run the full pipeline
 snakemake --cores <N> --use-conda
 ```
 
-This produces four output files in `results/`:
+This produces two files in `results/`:
 
 | File | Description |
 |---|---|
-| `benchmark_ontologizer.png/pdf` | Precision/recall curves for the synthetic benchmark |
-| `benchmark_geo2kegg.png/pdf` | Method comparison on real GEO datasets |
+| `benchmark_ontologizer.png` | Precision/recall plot (raster) |
+| `benchmark_ontologizer.pdf` | Precision/recall plot (vector) |
 
 ## Synthetic Benchmark Design
 
-Synthetic gene sets are generated with controlled parameters:
+Each study set contains roughly 500 signal genes drawn from randomly chosen GO terms, plus noise genes, and is characterized by two parameters:
 
-- **Recall experiment** — noise fixed at 0.4, signal recall varied from 0.1 to 1.0 in steps of 0.1
-- **Noise experiment** — recall fixed at 0.4, noise varied from 0.0 to 2.0× signal size in steps of 0.2
-- 10 replicates per configuration, 10 recall levels × 11 noise levels = ~400 total ORA runs
+- **ρ** — the fraction of each active term's annotated genes included in the study set.
+- **η** — the fraction of study-set genes annotated to an active term (the remainder are noise).
 
-Each run is evaluated by comparing predicted significant terms against the known ground-truth terms using detection recall and precision.
+For each (ρ, η) combination, 10 study sets are sampled. Every study set is scored by both Ontologizer modes, and the plotter compares each method's significant terms against the known ground truth, reporting term **precision** and **recall**.
 
 ## Project Structure
 
 ```
 config/
-  config.yaml                  # Paths to GO data and Ontologizer binary
-resources/
-  go-basic.obo                 # GO hierarchy (OBO format)
-  go-basic.json                # GO hierarchy (JSON format)
-  goa_human.gaf                # Human gene-GO annotations
-  goa_human_symbol.tab         # Gene symbol lookup table (generated)
-results/
-  synthetic/                   # Generated synthetic gene sets and ORA results
-  geo2kegg/                    # GEO datasets and ORA results
+  config.yaml                    # Paths to GO data and the Ontologizer binary
+resources/                       # Downloaded GO/GAF data (git-ignored)
+results/                         # Generated gene sets, ORA results, plots (git-ignored)
 workflow/
-  Snakefile
+  Snakefile                      # Entry point
   rules/
-    download_go.smk              # Download GO hierarchy and annotation files
+    download_go.smk              # Download GO hierarchy + human annotations
     benchmark_ontologizer.smk    # Synthetic benchmark rules
-    benchmark_geo2kegg.smk       # geo2kegg benchmark rules
   scripts/
     synthetic/
-      common.py                  # Shared utilities for synthetic benchmark
-      gen_population_genes.py    # Background gene universe
-      gen_recall_study_genes.py  # Synthetic sets varying signal recall
-      gen_noise_study_genes.py   # Synthetic sets varying noise level
-      run_freq_benchmark.py      # Frequentist ORA on synthetic data
-      run_bayes_benchmark.py     # Bayesian ORA on synthetic data
-    geo2kegg/
-      download_geo2kegg.R        # Download GEO datasets (R)
-      build_symbol_tab.py        # Build gene symbol lookup table
-      run_freq_ontologizer.py    # Frequentist ORA on GEO data
-      run_bayes_ontologizer.py   # Bayesian ORA on GEO data
-      run_freq_goatools.py       # GOATools ORA on GEO data
+      common.py                  # term_gene_map / study-set generation / extraction
+      gen_population_genes.py     # Background gene universe
+      gen_recall_study_genes.py   # Study sets for the recall (ρ) sweep
+      gen_precision_study_genes.py# Study sets for the precision (η) sweep
+      run_freq_benchmark.py       # Frequentist (FET) ORA via Ontologizer
+      run_bayes_benchmark.py      # Bayesian (MGSA) ORA via Ontologizer
     plot/
-      plot_ontologizer.py        # Plot synthetic benchmark results
-      plot_geo2kegg.py           # Plot geo2kegg benchmark results
+      plot_ontologizer.py         # Build the 2x2 benchmark figure
+    others/
+      gen_population_genes_organism.py  # Non-human helpers (not in the Snakefile)
+      gen_study_genes_organism.py
   envs/
     environment.yaml             # Conda environment definition
 ```
-
-

@@ -1,4 +1,5 @@
 go_json: "resources/go-basic.json"
 go_obo: "resources/go-basic.obo"
 gaf: "resources/goa_human.gaf"
-ontologizer: "/home/lukas/RustroverProjects/ontologizer/target/release/ontologizer"
+# Absolute path to the pre-built Ontologizer Rust binary (see README).
+ontologizer: "/path/to/ontologizer"

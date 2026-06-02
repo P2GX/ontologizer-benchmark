@@ -1,4 +1,5 @@
 import random
+import math
 from typing import Dict, Set
 from goatools.obo_parser import GODag
 from goatools.anno.gaf_reader import GafReader
@@ -40,14 +41,14 @@ def recall_set(
         genes: Set[str],
         recall: float
 ) -> Set[str]:
-    tp_genes = random.sample(list(genes), int(len(genes)*recall))
+    tp_genes = random.sample(list(genes), math.ceil(len(genes)*recall))
     return set(tp_genes)
 
-def generate_bench_data(term_to_genes, recall: float, noise: float, n_genes: int) -> Dict[str, Set[str]]:
+def generate_bench_data(term_to_genes, recall: float, precision: float, n_genes: int) -> Dict[str, Set[str]]:
     all_terms = set(term_to_genes.keys())
     all_genes = set.union(*term_to_genes.values())
 
-    eligible_terms = [t for t in all_terms if 10 <= len(term_to_genes[t]) <= 200]
+    eligible_terms = [t for t in all_terms if 10 <= len(term_to_genes[t])]
 
     # Accumulate signal genes from true terms until n_genes is reached
     signal_term_to_genes: Dict[str, Set[str]] = {}
@@ -58,10 +59,11 @@ def generate_bench_data(term_to_genes, recall: float, noise: float, n_genes: int
         signal_term_to_genes[term] = recall_genes
         n_signal += len(recall_genes)
 
-    # Add noise genes on top: noise_level * n_signal random genes from population
+    # Add noise genes so that TP / (TP + FP) == precision, i.e. FP = n_signal * (1 - precision) / precision
     result = dict(signal_term_to_genes)
-    if noise > 0:
-        result["Noise"] = set(random.sample(sorted(all_genes), int(n_signal * noise)))
+    if precision < 1:
+        n_noise = int(n_signal * (1 - precision) / precision)
+        result["Noise"] = set(random.sample(sorted(all_genes), n_noise))
 
     return result
 

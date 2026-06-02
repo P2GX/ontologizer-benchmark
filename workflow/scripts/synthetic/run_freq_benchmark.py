@@ -6,22 +6,6 @@ from typing import Dict, Any
 
 from common import extract_study_genes
 
-if "snakemake" not in dir():
-    class snakemake:
-        class input:
-            binary     = "/home/lukas/RustroverProjects/ontologizer/target/release/ontologizer"
-            go         = "/home/lukas/RustroverProjects/ontologizer/data/go-basic.json"
-            gaf        = "/home/lukas/RustroverProjects/ontologizer/data/goa_human.gaf"
-            study      = "../../results/synthetic/recall/recall_0.2.tsv"
-            population = "../../results/synthetic/population_genes.txt"
-        class wildcards:
-            fmethod = "ParentIntersection"
-            stat = "recall"
-            value = "0.2"
-            repeat = "0"
-        output = [f"../../results/synthetic/recall/results/ora_freq_ParentIntersection_recall_0.2_repeat_{i}.csv" for i in range(10)]
-    os.makedirs("../../results/synthetic/recall/results", exist_ok=True)
-
 binary = snakemake.input.binary
 go = snakemake.input.go
 gaf = snakemake.input.gaf
